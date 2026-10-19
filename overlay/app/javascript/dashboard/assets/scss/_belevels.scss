@@ -1,0 +1,29 @@
+// be levels · tema para Chatwoot.
+// Se importa al final de _woot.scss (lo agrega scripts/preparar.sh), así sobrescribe los colores de Chatwoot.
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+// Color de marca (botones principales, enlaces destacados). Formato "R G B".
+:root {
+  --belevels-brand: 18 18 18; // negro be levels #121212
+}
+
+.dark {
+  --belevels-brand: 58 58 58; // gris oscuro #3A3A3A: el texto de los botones es blanco y debe leerse
+}
+
+// Tipografía: DM Sans (brandbook: tipografía para plataformas online)
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family:
+    'DM Sans',
+    -apple-system,
+    system-ui,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
+}

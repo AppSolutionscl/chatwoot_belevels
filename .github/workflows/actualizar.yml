@@ -1,0 +1,99 @@
+name: Buscar nueva versión de Chatwoot
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'   # cada lunes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  buscar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comparar con la última versión oficial
+        id: v
+        run: |
+          ACTUAL="$(tr -d '[:space:]' < CHATWOOT_VERSION)"
+          NUEVA="$(git ls-remote --tags --refs https://github.com/chatwoot/chatwoot.git 'v*' \
+            | sed 's#.*refs/tags/##' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          echo "actual=$ACTUAL" >> "$GITHUB_OUTPUT"
+          echo "nueva=$NUEVA" >> "$GITHUB_OUTPUT"
+          if [[ "$(printf '%s\n%s\n' "$ACTUAL" "$NUEVA" | sort -V | tail -1)" == "$ACTUAL" ]]; then
+            echo "Ya estamos en la última versión ($ACTUAL)."
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nueva versión: $NUEVA (actual $ACTUAL)."
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: ¿Ya hay una propuesta abierta?
+        if: steps.v.outputs.hay == 'si'
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          N="$(gh pr list --head "actualizar-${{ steps.v.outputs.nueva }}" --state open --json number --jq length)"
+          echo "existe=$([[ "$N" -gt 0 ]] && echo si || echo no)" >> "$GITHUB_OUTPUT"
+
+      - name: Descargar Chatwoot ${{ steps.v.outputs.nueva }}
+        if: steps.v.outputs.hay == 'si' && steps.pr.outputs.existe == 'no'
+        uses: actions/checkout@v4
+        with:
+          repository: chatwoot/chatwoot
+          ref: ${{ steps.v.outputs.nueva }}
+          path: upstream
+
+      - name: Probar que nuestros cambios aplican
+        if: steps.v.outputs.hay == 'si' && steps.pr.outputs.existe == 'no'
+        id: prueba
+        continue-on-error: true
+        run: bash scripts/preparar.sh upstream 2>&1 | tee prueba.log
+
+      - name: Proponer la actualización
+        if: steps.v.outputs.hay == 'si' && steps.pr.outputs.existe == 'no' && steps.prueba.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTUAL: ${{ steps.v.outputs.actual }}
+          NUEVA: ${{ steps.v.outputs.nueva }}
+        run: |
+          rm -rf upstream prueba.log
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "actualizar-$NUEVA"
+          echo "$NUEVA" > CHATWOOT_VERSION
+          git commit -am "Actualizar Chatwoot a $NUEVA"
+          git push -u origin "actualizar-$NUEVA"
+          gh pr create --base main --head "actualizar-$NUEVA" \
+            --title "Actualizar Chatwoot a $NUEVA" \
+            --body "Hay una versión nueva de Chatwoot: **$NUEVA** (hoy usamos $ACTUAL).
+
+          Nuestros cambios be levels se aplicaron sin problemas sobre la versión nueva.
+
+          Notas de la versión: https://github.com/chatwoot/chatwoot/releases/tag/$NUEVA
+
+          **Para actualizar:** pulsa *Merge pull request*. Se construirá la imagen nueva (pestaña Actions) y su nombre aparecerá en el resumen del workflow. Luego, en Dokploy: backup de la base \`chatwoot\`, cambiar el tag de la imagen y *Deploy*."
+
+      - name: Avisar que hay que ajustar algo
+        if: steps.v.outputs.hay == 'si' && steps.pr.outputs.existe == 'no' && steps.prueba.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUEVA: ${{ steps.v.outputs.nueva }}
+        run: |
+          TITULO="Chatwoot $NUEVA: hay que ajustar los cambios be levels"
+          if [[ "$(gh issue list --state open --search "in:title \"$TITULO\"" --json number --jq length)" -eq 0 ]]; then
+            gh issue create --title "$TITULO" --body "Salió Chatwoot **$NUEVA**, pero alguno de nuestros cambios ya no aplica sobre la versión nueva.
+
+          Salida de la prueba:
+
+          \`\`\`
+          $(tail -40 prueba.log)
+          \`\`\`
+
+          No se cambió nada: seguimos en la versión actual hasta ajustar el cambio que falló."
+          fi
