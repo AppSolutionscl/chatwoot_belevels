@@ -30,6 +30,29 @@ if ! grep -q "belevels-brand" "$COLORS"; then
 fi
 echo "ok  color de marca"
 
+# Valores por defecto de la marca (instalaciones nuevas; las existentes las actualiza lib/tasks/belevels.rake).
+ICFG="$CW/config/installation_config.yml"
+[[ -f "$ICFG" ]] || falla "no existe $ICFG"
+python3 - "$ICFG" <<'PY'
+import re, sys
+p = sys.argv[1]; s = open(p).read()
+for name, value in {
+    'INSTALLATION_NAME': 'CRM be levels Chile',
+    'BRAND_NAME': 'be levels',
+    'LOGO': '/belevels/logo.png',
+    'LOGO_DARK': '/belevels/logo_dark.png',
+    'LOGO_THUMBNAIL': '/belevels/logo_thumbnail.png',
+}.items():
+    s, n = re.subn(r"(- name: %s\n  value: )'[^']*'" % name, r"\1'%s'" % value, s)
+    if n != 1: sys.exit("installation_config.yml: no se encontró %s" % name)
+open(p, 'w').write(s)
+PY
+echo "ok  marca por defecto en installation_config.yml"
+
+# Color del navegador (barra/tiles) en las plantillas: azul Chatwoot -> negro be levels.
+grep -rl "#2781F6" "$CW/app/views" | xargs -r sed -i 's/#2781F6/#121212/g'
+echo "ok  color del navegador"
+
 # 4. Parches (opcionales), en orden.
 shopt -s nullglob
 for p in "$AQUI"/patches/*.patch; do
