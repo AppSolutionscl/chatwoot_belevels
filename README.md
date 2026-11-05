@@ -24,7 +24,8 @@ guarda solo nuestros cambios, y GitHub Actions los aplica sobre la versión ofic
 
 - Colores y tipografía: `overlay/app/javascript/dashboard/assets/scss/_belevels.scss`.
 - Nombre de la instalación, nombre de marca y rutas de los logos: `overlay/lib/tasks/belevels.rake` (y los mismos valores en `scripts/preparar.sh`).
-- Logos del login: `overlay/public/belevels/logo.png` (modo claro) y `logo_dark.png` (modo oscuro). Favicons: `overlay/public/*.png`.
+- Logos del login: `overlay/public/belevels/logo.png` (modo claro) y `logo_dark.png` (modo oscuro). Favicons: `overlay/public/*.png` y `favicon.ico`.
+- Consola de Super Admin: tipografía en `overlay/app/javascript/dashboard/assets/scss/super_admin/_belevels.scss`; logo, textos y título se cambian en `scripts/preparar.sh`; los colores vienen de la paleta `woot` (también en `preparar.sh`).
 
 Subir el cambio a `main`:
 se construye una imagen nueva con tag `vX.Y.Z-bl.N`.

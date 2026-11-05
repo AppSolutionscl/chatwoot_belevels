@@ -61,6 +61,50 @@ open(p, 'w').write(s)
 PY
 echo "ok  marca por defecto en installation_config.yml"
 
+# Paleta `woot` (usada por la consola de Super Admin y partes antiguas del panel): azul Chatwoot -> negro/gris be levels.
+python3 - "$COLORS" <<'PY'
+import re, sys
+p = sys.argv[1]; s = open(p).read()
+nueva = """woot: {
+    25: '#F7F7F7',   // gris plata be levels (fondos)
+    50: '#EFEFEF',
+    75: '#E4E4E4',
+    100: '#D9D9D9',
+    200: '#BDBDBD',
+    300: '#9E9E9E',
+    400: '#5C5C5C',
+    500: '#121212',  // negro be levels (botones, enlaces, activo)
+    600: '#3A3A3A',  // hover
+    700: '#2A2A2A',
+    800: '#1A1A1A',
+    900: '#0D0D0D',
+  },"""
+s, n = re.subn(r"woot: \{.*?\},", nueva, s, count=1, flags=re.S)
+if n != 1: sys.exit("theme/colors.js: no se encontró la paleta woot")
+open(p, 'w').write(s)
+PY
+echo "ok  paleta woot be levels"
+
+# Consola de Super Admin: tipografía, logo, textos y título.
+SA_SCSS="$CW/app/javascript/dashboard/assets/scss/super_admin/index.scss"
+[[ -f "$SA_SCSS" ]] || falla "no existe $SA_SCSS"
+grep -q "@import 'belevels';" "$SA_SCSS" || printf "\n// be levels\n@import 'belevels';\n" >> "$SA_SCSS"
+NAV="$CW/app/views/super_admin/application/_navigation.html.erb"
+[[ -f "$NAV" ]] || falla "no existe $NAV"
+sed -i "s|image_tag('/brand-assets/logo_thumbnail.svg', alt: 'Chatwoot Admin Dashboard', class: 'h-10')|image_tag('/belevels/logo_thumbnail.png', alt: 'be levels', class: 'h-10 rounded-lg')|" "$NAV"
+sed -i 's|<div class="text-sm">Chatwoot <%= Chatwoot.config\[:version\] %></div>|<div class="text-sm">CRM be levels Chile</div>|' "$NAV"
+sed -i 's|<div class="text-xs text-slate-700 mt-0.5">Super Admin Console</div>|<div class="text-xs text-slate-700 mt-0.5">Super Admin · Chatwoot <%= Chatwoot.config[:version] %></div>|' "$NAV"
+grep -q "CRM be levels Chile" "$NAV" || falla "_navigation.html.erb cambió; revisar los textos del menú de Super Admin"
+SESS="$CW/app/views/super_admin/devise/sessions/new.html.erb"
+[[ -f "$SESS" ]] || falla "no existe $SESS"
+sed -i 's|<title>SuperAdmin \| Chatwoot</title>|<title>Super Admin \| CRM be levels Chile</title>|; s|src="/brand-assets/logo.svg" alt="Chatwoot"|src="/belevels/logo.png" alt="be levels"|; s|src="/brand-assets/logo_dark.svg" alt="Chatwoot"|src="/belevels/logo_dark.png" alt="be levels"|; s|Howdy, admin 👋|Hola, admin 👋|' "$SESS"
+grep -q "belevels/logo.png" "$SESS" || falla "sessions/new.html.erb cambió; revisar el logo del login de Super Admin"
+LAY="$CW/app/views/layouts/super_admin/application.html.erb"
+[[ -f "$LAY" ]] || falla "no existe $LAY"
+sed -i 's|<%= content_for(:title) %> - <%= application_title %>|<%= content_for(:title) %> - CRM be levels Chile|' "$LAY"
+grep -q 'rel="icon"' "$LAY" || sed -i 's|  <%= csrf_meta_tags %>|  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">\n  <%= csrf_meta_tags %>|' "$LAY"
+echo "ok  consola de Super Admin"
+
 # Color del navegador (barra/tiles) en las plantillas: azul Chatwoot -> negro be levels.
 grep -rl "#2781F6" "$CW/app/views" | xargs -r sed -i 's/#2781F6/#121212/g'
 echo "ok  color del navegador"

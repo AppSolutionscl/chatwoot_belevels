@@ -1,0 +1,19 @@
+// be levels · tema para la consola de Super Admin (se importa al final de super_admin/index.scss).
+// Los colores salen de la paleta `woot` (scripts/preparar.sh la cambia al negro/gris be levels en theme/colors.js).
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'DM Sans', -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+// Detalle amarillo be levels (#FFEB5F) solo como acento: foco de campos
+input:focus,
+select:focus,
+textarea:focus {
+  outline-color: #ffeb5f;
+}
