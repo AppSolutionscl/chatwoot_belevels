@@ -9,9 +9,21 @@ CW="$(cd "${1:?Indica la carpeta con el código de Chatwoot}" && pwd)"
 
 falla() { echo "ERROR: $*" >&2; exit 1; }
 
-# 1. Edición Community: sin la carpeta enterprise (licencia aparte), igual que la imagen oficial -ce.
-rm -rf "$CW/enterprise" "$CW/spec/enterprise"
-echo "ok  edición community (sin enterprise/)"
+# 1. Edición: `community` quita la carpeta enterprise (como la imagen oficial -ce);
+#    `enterprise` la conserva (código con licencia Enterprise de Chatwoot: requiere una licencia o prueba válida,
+#    que el hub de Chatwoot asocia al identificador de la instalación).
+EDICION="$(tr -d '[:space:]' < "$AQUI/CHATWOOT_EDITION" 2>/dev/null || echo community)"
+case "$EDICION" in
+  community)
+    rm -rf "$CW/enterprise" "$CW/spec/enterprise"
+    printf '\nENV CW_EDITION="ce"\n' >> "$CW/docker/Dockerfile"
+    echo "ok  edición community (sin enterprise/)" ;;
+  enterprise)
+    [[ -d "$CW/enterprise" ]] || falla "no existe $CW/enterprise"
+    printf '\nENV CW_EDITION="ee"\n' >> "$CW/docker/Dockerfile"
+    echo "ok  edición enterprise (con enterprise/)" ;;
+  *) falla "CHATWOOT_EDITION debe ser community o enterprise (hay: $EDICION)" ;;
+esac
 
 # 2. Archivos propios (overlay/ se copia encima, con las mismas rutas).
 cp -R "$AQUI/overlay/." "$CW/"

@@ -25,10 +25,13 @@ jobs:
         id: v
         run: |
           VERSION="$(tr -d '[:space:]' < CHATWOOT_VERSION)"
+          EDICION="$(tr -d '[:space:]' < CHATWOOT_EDITION 2>/dev/null || echo community)"
           IMAGEN="ghcr.io/${GITHUB_REPOSITORY,,}"
+          SUFIJO=""; [[ "$EDICION" == "enterprise" ]] && SUFIJO="-ee"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "edicion=$EDICION" >> "$GITHUB_OUTPUT"
           echo "imagen=$IMAGEN" >> "$GITHUB_OUTPUT"
-          echo "tag=$VERSION-bl.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "tag=$VERSION$SUFIJO-bl.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Descargar Chatwoot ${{ steps.v.outputs.version }}
         uses: actions/checkout@v4
@@ -60,7 +63,7 @@ jobs:
             ${{ steps.v.outputs.imagen }}:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=Chatwoot ${{ steps.v.outputs.version }} (community) con marca be levels
+            org.opencontainers.image.description=Chatwoot ${{ steps.v.outputs.version }} (${{ steps.v.outputs.edicion }}) con marca be levels
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

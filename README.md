@@ -6,6 +6,7 @@ guarda solo nuestros cambios, y GitHub Actions los aplica sobre la versión ofic
 | Archivo | Para qué |
 |---------|----------|
 | `CHATWOOT_VERSION` | Versión oficial de Chatwoot sobre la que se construye (ej. `v4.18.0`) |
+| `CHATWOOT_EDITION` | `community` (sin `enterprise/`, tag `vX.Y.Z-bl.N`) o `enterprise` (con `enterprise/`, tag `vX.Y.Z-ee-bl.N`). Enterprise requiere licencia o prueba válida de Chatwoot; el plan lo fija su hub según el identificador de la instalación (variable opcional `BELEVELS_INSTALLATION_IDENTIFIER` en Dokploy) |
 | `overlay/` | Archivos propios que se copian encima del código (mismas rutas): el tema `_belevels.scss` (DM Sans, negro be levels), los logos del login (`public/belevels/`), los favicons e iconos (`public/*.png`, `manifest.json`) y `lib/tasks/belevels.rake`, que pone nombre y logos de la instalación en cada arranque |
 | `scripts/preparar.sh` | Aplica los cambios: quita `enterprise/`, copia `overlay/`, hace ediciones mínimas (importa el tema, color de marca, nombre y logos por defecto, color del navegador) y aplica `patches/` |
 | `patches/` | Cambios más grandes al código, como archivos `.patch` (vacío por ahora) |
